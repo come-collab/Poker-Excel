@@ -1,0 +1,6 @@
+Création d'une application permettant de manipuler les excels en live pour Didier.
+
+Deux Interfaces, Admin / Utilisateurs avec un admin ayant des droits sur les sessions Utilisateurs
+
+Les joueurs ont leurs interfaces qui vont etre des interfaces de consultations principalement.
+
