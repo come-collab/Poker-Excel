@@ -6,6 +6,7 @@ import hashlib
 from typing import Dict
 import pandas as pd
 import io
+from pathlib import Path
 
 def load_users() -> Dict:
     """Load users from JSON file"""
@@ -18,11 +19,13 @@ def save_users(users: Dict) -> None:
         json.dump(users, f, indent=4)
 
 def load_tournament_data():
-    """Load tournament data from Excel file"""
+    """Load tournament data from Excel/CSV file"""
     try:
         excel_manager = ExcelManager("main_data.xlsx", "tournament_data.xlsx")
-        return pd.read_excel("tournament_data.xlsx")
-    except FileNotFoundError:
+        if Path("tournament_data.xlsx").exists():
+            return pd.read_excel("tournament_data.xlsx")
+        elif Path("tournament_data.csv").exists():
+            return pd.read_csv("tournament_data.csv")
         return None
     except Exception as e:
         st.error(f"Error loading tournament data: {str(e)}")
@@ -33,8 +36,8 @@ def format_tournament_data(df):
     if df is None:
         return None
         
-    # Rename columns to match the French names
-    column_mapping = {
+    # Select and rename columns in the desired order
+    columns_mapping = {
         'Classement': 'Classement',
         'Joueurs': 'Joueurs',
         'Pts Classement': 'Pts Classement',
@@ -44,8 +47,11 @@ def format_tournament_data(df):
         'Nb de Kill': 'Nb de Kill'
     }
     
+    # Select only the columns we want in the specified order
+    df = df[list(columns_mapping.keys())]
+    
     # Apply formatting
-    df = df.rename(columns=column_mapping)
+    df = df.rename(columns=columns_mapping)
     
     # Format numeric columns
     numeric_columns = ['Pts Classement', 'Bonus Kills', 'Total des Pts', 'Nb de Kill']
@@ -57,12 +63,13 @@ def format_tournament_data(df):
     if 'Moyenne' in df.columns:
         df['Moyenne'] = df['Moyenne'].round(2)
     
-    # Style the dataframe
+    # Style the dataframe with specific number formatting
     return df.style.apply(lambda x: ['background-color: #FFD700' if i == 0 
                                    else 'background-color: #C0C0C0' if i == 1 
                                    else 'background-color: #CD7F32' if i == 2
                                    else '' for i in range(len(x))], axis=0)\
                   .format({
+                      'Classement': '{:.0f}',
                       'Pts Classement': '{:.1f}',
                       'Bonus Kills': '{:.0f}',
                       'Total des Pts': '{:.1f}',
@@ -199,7 +206,12 @@ def admin_view():
         
         if uploaded_file is not None:
             try:
-                df = pd.read_excel(uploaded_file)
+                # Read the file based on its type
+                file_extension = uploaded_file.name.split('.')[-1].lower()
+                if file_extension in ['xlsx', 'xls']:
+                    df = pd.read_excel(uploaded_file)
+                elif file_extension == 'csv':
+                    df = pd.read_csv(uploaded_file)
                 
                 # Preview the uploaded data
                 st.markdown("### Preview of New Data")
@@ -215,7 +227,7 @@ def admin_view():
                 
             except Exception as e:
                 st.error(f"Error processing file: {str(e)}")
-
+                st.error("Please ensure your file has the required columns: Classement, Joueurs, Pts Classement, Bonus Kills, Total des Pts, Moyenne, Nb de Kill")
 def user_view():
     """Display the regular user interface"""
     st.title(f"Welcome {st.session_state.user.username}")
