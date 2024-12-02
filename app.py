@@ -1,8 +1,11 @@
+# app.py
 import streamlit as st
 from core import User, ExcelManager
 import json
 import hashlib
 from typing import Dict
+import pandas as pd
+import io
 
 def load_users() -> Dict:
     """Load users from JSON file"""
@@ -13,6 +16,69 @@ def save_users(users: Dict) -> None:
     """Save users to JSON file"""
     with open('users.json', 'w') as f:
         json.dump(users, f, indent=4)
+
+def load_tournament_data():
+    """Load tournament data from Excel file"""
+    try:
+        excel_manager = ExcelManager("main_data.xlsx", "tournament_data.xlsx")
+        return pd.read_excel("tournament_data.xlsx")
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        st.error(f"Error loading tournament data: {str(e)}")
+        return None
+
+def format_tournament_data(df):
+    """Format the tournament data display"""
+    if df is None:
+        return None
+        
+    # Rename columns to match the French names
+    column_mapping = {
+        'Classement': 'Classement',
+        'Joueurs': 'Joueurs',
+        'Pts Classement': 'Pts Classement',
+        'Bonus Kills': 'Bonus Kills',
+        'Total des Pts': 'Total des Pts',
+        'Moyenne': 'Moyenne',
+        'Nb de Kill': 'Nb de Kill'
+    }
+    
+    # Apply formatting
+    df = df.rename(columns=column_mapping)
+    
+    # Format numeric columns
+    numeric_columns = ['Pts Classement', 'Bonus Kills', 'Total des Pts', 'Nb de Kill']
+    for col in numeric_columns:
+        if col in df.columns:
+            df[col] = df[col].apply(lambda x: int(x) if x == int(x) else round(x, 1))
+    
+    # Format Moyenne column separately (always show 2 decimal places)
+    if 'Moyenne' in df.columns:
+        df['Moyenne'] = df['Moyenne'].round(2)
+    
+    # Style the dataframe
+    return df.style.apply(lambda x: ['background-color: #FFD700' if i == 0 
+                                   else 'background-color: #C0C0C0' if i == 1 
+                                   else 'background-color: #CD7F32' if i == 2
+                                   else '' for i in range(len(x))], axis=0)\
+                  .format({
+                      'Pts Classement': '{:.1f}',
+                      'Bonus Kills': '{:.0f}',
+                      'Total des Pts': '{:.1f}',
+                      'Moyenne': '{:.2f}',
+                      'Nb de Kill': '{:.0f}'
+                  })
+
+def display_tournament_data():
+    """Display tournament data in a formatted table"""
+    df = load_tournament_data()
+    if df is not None:
+        st.markdown("### Current Tournament Standings")
+        formatted_df = format_tournament_data(df)
+        st.dataframe(formatted_df, use_container_width=True)
+    else:
+        st.warning("No tournament data available")
 
 def init_session_state():
     """Initialize session state variables if they don't exist"""
@@ -120,22 +186,51 @@ def admin_view():
                         st.rerun()
                 
                 st.divider()
-        
+    
     with tab2:
         st.subheader("Tournament Management")
-        st.write("Tournament management interface will be implemented here")
+        
+        # Display current tournament data
+        display_tournament_data()
+        
+        # File upload section
+        st.markdown("### Update Tournament Data")
+        uploaded_file = st.file_uploader("Choose a tournament Excel file", type=['xlsx', 'xls'])
+        
+        if uploaded_file is not None:
+            try:
+                df = pd.read_excel(uploaded_file)
+                
+                # Preview the uploaded data
+                st.markdown("### Preview of New Data")
+                formatted_preview = format_tournament_data(df)
+                st.dataframe(formatted_preview, use_container_width=True)
+                
+                # Add update button
+                if st.button("Update Tournament Data"):
+                    excel_manager = ExcelManager("main_data.xlsx", "tournament_data.xlsx")
+                    excel_manager.save_tournament_data(df)
+                    st.success("Tournament data updated successfully!")
+                    st.rerun()  # Refresh to show new data
+                
+            except Exception as e:
+                st.error(f"Error processing file: {str(e)}")
 
 def user_view():
     """Display the regular user interface"""
-    st.title(f"Welcome User: {st.session_state.user.username}")
+    st.title(f"Welcome {st.session_state.user.username}")
     
     if st.sidebar.button("Logout"):
         st.session_state.user = None
         st.session_state.authenticated = False
         st.rerun()
     
-    st.header("Tournament View")
-    st.write("Tournament viewing interface will be implemented here")
+    # Display tournament data for users
+    display_tournament_data()
+    
+    # Add auto-refresh button
+    if st.button("Refresh Data"):
+        st.rerun()
 
 def main():
     init_session_state()
