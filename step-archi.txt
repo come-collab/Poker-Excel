@@ -1,6 +1,7 @@
-Création d'une application permettant de manipuler les excels en live pour Didier.
+Next steps : 
 
-Deux Interfaces, Admin / Utilisateurs avec un admin ayant des droits sur les sessions Utilisateurs
-
-Les joueurs ont leurs interfaces qui vont etre des interfaces de consultations principalement.
-
+    - Missing the earning part of the active tournament,
+    - Translate everything, 
+    - Add the vision of the active tournament to all the Users
+    - Adding the list of the registered bdf participants for the creation of the tournaments,
+    - Add Better management of the tournament : Really like a poker competition (if one player stays alive he is the winner...)
