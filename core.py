@@ -119,7 +119,7 @@ class TournamentManager:
         df.to_excel(excel_path, index=False)
     
     def create_tournament(self, name: str, num_players: int, participants: list, 
-                         bounties: list, stack_size: int, comment: str) -> None:
+                         bounties: list, stack_size: int, comment: str, earnings: dict) -> None:
         """Create a new tournament"""
         if name in self.tournaments:
             raise ValueError(f"Tournament {name} already exists")
@@ -131,6 +131,7 @@ class TournamentManager:
             'bounties': bounties,
             'stack_size': stack_size,
             'comment': comment,
+            'earnings': earnings,  # Add earnings to tournament data
             'date_created': datetime.now().isoformat(),
             'history': []
         }
