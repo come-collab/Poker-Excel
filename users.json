@@ -7,9 +7,13 @@
         "password": "0a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90",
         "is_admin": false
     },
-    "user2" : 
-    {
-        "password" : "6025d18fe48abd45168528f18a82e265dd98d421a7084aa09f61b341703901a3",
-        "is_admin" : false
+    "user2": {
+        "password": "6025d18fe48abd45168528f18a82e265dd98d421a7084aa09f61b341703901a3",
+        "is_admin": false
+    },
+    "C\u00f4me": {
+        "password": "9c19636ddea25f0a13357d01c0aef27a4eb4c7f8cbaf2be35f272273572ce2e5",
+        "is_admin": false,
+        "suspended": false
     }
 }

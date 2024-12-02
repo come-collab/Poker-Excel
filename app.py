@@ -1,6 +1,18 @@
 import streamlit as st
 from core import User, ExcelManager
 import json
+import hashlib
+from typing import Dict
+
+def load_users() -> Dict:
+    """Load users from JSON file"""
+    with open('users.json', 'r') as f:
+        return json.load(f)
+
+def save_users(users: Dict) -> None:
+    """Save users to JSON file"""
+    with open('users.json', 'w') as f:
+        json.dump(users, f, indent=4)
 
 def init_session_state():
     """Initialize session state variables if they don't exist"""
@@ -13,7 +25,6 @@ def login_page():
     """Display the login interface"""
     st.title("Poker Tournament Manager")
     
-    # Create columns for centered login form
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
@@ -22,11 +33,9 @@ def login_page():
         password = st.text_input("Password", type="password")
         
         if st.button("Login"):
-            # Check if username exists in users.json to determine admin status
-            with open('users.json', 'r') as f:
-                users = json.load(f)
+            users = load_users()
             
-            if username in users:
+            if username in users and not users[username].get('suspended', False):
                 is_admin = users[username]['is_admin']
                 user = User(username, is_admin)
                 
@@ -38,13 +47,15 @@ def login_page():
                 else:
                     st.error("Invalid credentials")
             else:
-                st.error("Invalid credentials")
+                if username in users and users[username].get('suspended', False):
+                    st.error("This account has been suspended. Please contact an administrator.")
+                else:
+                    st.error("Invalid credentials")
 
 def admin_view():
     """Display the admin interface"""
     st.title(f"Welcome Admin: {st.session_state.user.username}")
     
-    # Add logout button in sidebar
     if st.sidebar.button("Logout"):
         st.session_state.user = None
         st.session_state.authenticated = False
@@ -52,15 +63,63 @@ def admin_view():
     
     st.header("Admin Dashboard")
     
-    # Create tabs for different admin functionalities
     tab1, tab2 = st.tabs(["User Management", "Tournament Management"])
     
     with tab1:
         st.subheader("User Management")
-        # Display current users
-        with open('users.json', 'r') as f:
-            users = json.load(f)
-        st.json(users)
+        
+        # Create new user section
+        st.markdown("### Create New User")
+        with st.form("create_user"):
+            new_username = st.text_input("New Username")
+            new_password = st.text_input("New Password", type="password")
+            is_admin = st.checkbox("Admin Privileges")
+            
+            submit_button = st.form_submit_button("Create User")
+            
+            if submit_button:
+                users = load_users()
+                if new_username in users:
+                    st.error("Username already exists!")
+                elif not new_username or not new_password:
+                    st.error("Username and password are required!")
+                else:
+                    users[new_username] = {
+                        "password": hashlib.sha256(new_password.encode()).hexdigest(),
+                        "is_admin": is_admin,
+                        "suspended": False
+                    }
+                    save_users(users)
+                    st.success(f"User {new_username} created successfully!")
+        
+        # User management section
+        st.markdown("### Manage Existing Users")
+        users = load_users()
+        
+        for username, user_data in users.items():
+            if username != st.session_state.user.username:  # Prevent self-modification
+                col1, col2, col3 = st.columns([2, 1, 1])
+                with col1:
+                    st.write(f"Username: {username}")
+                    st.write(f"Role: {'Admin' if user_data['is_admin'] else 'User'}")
+                    st.write(f"Status: {'Suspended' if user_data.get('suspended', False) else 'Active'}")
+                
+                with col2:
+                    if st.button(
+                        "Suspend" if not user_data.get('suspended', False) else "Reactivate",
+                        key=f"suspend_{username}"
+                    ):
+                        users[username]['suspended'] = not users[username].get('suspended', False)
+                        save_users(users)
+                        st.rerun()
+                
+                with col3:
+                    if st.button("Delete", key=f"delete_{username}"):
+                        del users[username]
+                        save_users(users)
+                        st.rerun()
+                
+                st.divider()
         
     with tab2:
         st.subheader("Tournament Management")
@@ -70,7 +129,6 @@ def user_view():
     """Display the regular user interface"""
     st.title(f"Welcome User: {st.session_state.user.username}")
     
-    # Add logout button in sidebar
     if st.sidebar.button("Logout"):
         st.session_state.user = None
         st.session_state.authenticated = False
@@ -80,17 +138,14 @@ def user_view():
     st.write("Tournament viewing interface will be implemented here")
 
 def main():
-    # Initialize session state
     init_session_state()
     
-    # Configure page
     st.set_page_config(
         page_title="Poker Tournament Manager",
         page_icon="🎰",
         layout="wide"
     )
     
-    # Display appropriate view based on authentication status
     if not st.session_state.authenticated:
         login_page()
     else:
