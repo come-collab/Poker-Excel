@@ -1,6 +1,5 @@
 Next steps : 
 
-    - Missing the earning part of the active tournament,
     - Translate everything, 
     - Add the vision of the active tournament to all the Users
     - Adding the list of the registered bdf participants for the creation of the tournaments,
