@@ -113,7 +113,7 @@ class TournamentManager:
     
     def create_tournament_excel(self, tournament_name: str, num_players: int) -> None:
         """Create initial tournament Excel file with required columns"""
-        df = pd.DataFrame(columns=['Rank', 'Player', 'Elimination Time', 'Eliminated By'])
+        df = pd.DataFrame(columns=['Rank', 'Player', 'Elimination Time', 'Eliminated By', 'Bounty Claimed From'])
         df['Rank'] = range(num_players, 0, -1)  # Reverse order for eliminations
         excel_path = f"tournament_{tournament_name}.xlsx"
         df.to_excel(excel_path, index=False)
@@ -163,6 +163,11 @@ class TournamentManager:
         excel_path = f"tournament_{tournament_name}.xlsx"
         
         try:
+            # Load tournament data to check bounties
+            tournaments = self.load_tournaments()
+            tournament_data = tournaments[tournament_name]
+            bounties = tournament_data.get('bounties', [])
+            
             df = pd.read_excel(excel_path)
             
             # Find the first empty row (based on Player column) and update it
@@ -172,6 +177,18 @@ class TournamentManager:
                 df.loc[idx, 'Player'] = player
                 df.loc[idx, 'Elimination Time'] = elimination_time
                 df.loc[idx, 'Eliminated By'] = eliminated_by
+                
+                # If the eliminated player had a bounty, award point to the eliminator on this line
+                bounty_points = 1 if player in bounties else 0
+                df.loc[idx, 'Bounty Points'] = bounty_points
+                
+                if bounty_points > 0:
+                    # Update tournament history with bounty claim
+                    self.update_tournament_history(
+                        tournament_name,
+                        "Bounty Claimed",
+                        f"{eliminated_by} claimed bounty point for eliminating {player}"
+                    )
                 
                 # Save updates
                 df.to_excel(excel_path, index=False)
