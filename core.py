@@ -158,15 +158,16 @@ class TournamentManager:
         self.save_tournaments()
     
     def update_tournament_elimination(self, tournament_name: str, player: str, 
-                                    elimination_time: str, eliminated_by: str) -> None:
+                                elimination_time: str, eliminated_by: str) -> None:
         """Update tournament Excel with elimination information"""
         excel_path = f"tournament_{tournament_name}.xlsx"
         
         try:
-            # Load tournament data to check bounties
+            # Load tournament data to check bounties and participants
             tournaments = self.load_tournaments()
             tournament_data = tournaments[tournament_name]
             bounties = tournament_data.get('bounties', [])
+            all_participants = tournament_data.get('participants', [])
             
             df = pd.read_excel(excel_path)
             
@@ -178,7 +179,7 @@ class TournamentManager:
                 df.loc[idx, 'Elimination Time'] = elimination_time
                 df.loc[idx, 'Eliminated By'] = eliminated_by
                 
-                # If the eliminated player had a bounty, award point to the eliminator on this line
+                # If the eliminated player had a bounty, award point to the eliminator
                 bounty_points = 1 if player in bounties else 0
                 df.loc[idx, 'Bounty Points'] = bounty_points
                 
@@ -188,6 +189,27 @@ class TournamentManager:
                         tournament_name,
                         "Bounty Claimed",
                         f"{eliminated_by} claimed bounty point for eliminating {player}"
+                    )
+                
+                # Check if there's only one player left
+                recorded_players = set(df['Player'].dropna().values)
+                remaining_players = [p for p in all_participants if p not in recorded_players]
+                
+                # If there's exactly one player remaining, they're the winner
+                if len(remaining_players) == 1:
+                    winner = remaining_players[0]
+                    # Find the last empty row
+                    last_empty_idx = empty_row[empty_row].index[-1]
+                    # Add the winner
+                    df.loc[last_empty_idx, 'Player'] = winner
+                    df.loc[last_empty_idx, 'Elimination Time'] = elimination_time  # Same time as last elimination
+                    df.loc[last_empty_idx, 'Eliminated By'] = "WINNER"  # Mark as winner
+                    
+                    # Update tournament history
+                    self.update_tournament_history(
+                        tournament_name,
+                        "Winner Declared",
+                        f"{winner} wins the tournament!"
                     )
                 
                 # Save updates
