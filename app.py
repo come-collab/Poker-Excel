@@ -438,23 +438,44 @@ def admin_view():
                 # Form for recording eliminations
                 st.markdown("### Record Elimination")
                 with st.form("elimination_form"):
-                    # Create selection box with remaining players (not yet eliminated)
+                    # Get currently eliminated players
                     try:
-                        remaining_players = [p for p in tournament_data['participants'] 
-                                          if p not in df['Player'].dropna().values]
+                        eliminated_players = set(df['Player'].dropna().values)
                     except:
-                        remaining_players = tournament_data['participants']
+                        eliminated_players = set()
                     
+                    # Create list of remaining players (not yet eliminated)
+                    remaining_players = [p for p in tournament_data['participants'] 
+                                      if p not in eliminated_players]
+                    
+                    # Only show remaining players in elimination dropdown
                     eliminated_player = st.selectbox(
                         "Eliminated Player",
-                        remaining_players if remaining_players else ["No players available"]
+                        remaining_players if remaining_players else ["No players available"],
+                        key="eliminated_player"
                     )
                     
-                    elimination_time = st.time_input("Elimination Time", value=datetime.time())
+                    # Time selection with current time as default
+                    current_time = datetime.datetime.now().time()
+                    elimination_time = st.time_input(
+                        "Elimination Time",
+                        value=current_time,
+                        key="elimination_time"
+                    )
                     
-                    # Killer selection (from remaining players + eliminated players)
-                    all_players = tournament_data['participants']
-                    killer = st.selectbox("Eliminated By", all_players)
+                    # Killer selection (from all players including eliminated)
+                    # But mark eliminated players with "(Eliminated)" suffix
+                    killer_options = [
+                        f"{p}{' (Eliminated)' if p in eliminated_players else ''}"
+                        for p in tournament_data['participants']
+                    ]
+                    killer_display = st.selectbox(
+                        "Eliminated By",
+                        killer_options,
+                        key="killer"
+                    )
+                    # Remove "(Eliminated)" suffix for database storage
+                    killer = killer_display.split(" (Eliminated)")[0]
                     
                     submit_button = st.form_submit_button("Record Elimination")
                     
@@ -475,12 +496,21 @@ def admin_view():
                             )
                             
                             st.success(f"Recorded elimination of {eliminated_player}")
+                            # Clear the form selections
+                            if 'eliminated_player' in st.session_state:
+                                del st.session_state.eliminated_player
+                            if 'killer' in st.session_state:
+                                del st.session_state.killer
                             st.rerun()
+                            
                         except Exception as e:
                             st.error(f"Error recording elimination: {str(e)}")
+                            
+                # Display remaining players count
+                st.info(f"Remaining players: {len(remaining_players)}")
+                
         else:
             st.warning("No tournaments available. Please create a tournament first.")
-
 
 def user_view():
     """Display the regular user interface"""
