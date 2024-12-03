@@ -395,6 +395,7 @@ def admin_view():
         else:
             st.info("No tournaments created yet")
     with tab4:
+        
         st.subheader("Active Tournament Management")
         
         # Select active tournament
@@ -406,6 +407,7 @@ def admin_view():
             selected_tournament = st.selectbox("Select Tournament", tournament_names)
             
             if selected_tournament:
+                # Get tournament data
                 tournament_data = tournaments[selected_tournament]
                 
                 # Display tournament info
@@ -434,6 +436,7 @@ def admin_view():
                     st.dataframe(df, use_container_width=True)
                 except Exception as e:
                     st.error(f"Error loading tournament data: {str(e)}")
+                    df = pd.DataFrame()  # Create empty DataFrame if file doesn't exist
                 
                 # Form for recording eliminations
                 st.markdown("### Record Elimination")
@@ -455,16 +458,34 @@ def admin_view():
                         key="eliminated_player"
                     )
                     
-                    # Time selection with current time as default
+                    # Create two columns for hour and minute inputs
+                    time_col1, time_col2 = st.columns(2)
+                    
+                    # Current time as default values
                     current_time = datetime.datetime.now().time()
-                    elimination_time = st.time_input(
-                        "Elimination Time",
-                        value=current_time,
-                        key="elimination_time"
-                    )
+                    
+                    with time_col1:
+                        hour = st.number_input(
+                            "Hour",
+                            min_value=0,
+                            max_value=23,
+                            value=current_time.hour,
+                            key="elimination_hour"
+                        )
+                    
+                    with time_col2:
+                        minute = st.number_input(
+                            "Minute",
+                            min_value=0,
+                            max_value=59,
+                            value=current_time.minute,
+                            key="elimination_minute"
+                        )
+                    
+                    # Combine hour and minute into a time object
+                    elimination_time = datetime.time(hour=int(hour), minute=int(minute))
                     
                     # Killer selection (from all players including eliminated)
-                    # But mark eliminated players with "(Eliminated)" suffix
                     killer_options = [
                         f"{p}{' (Eliminated)' if p in eliminated_players else ''}"
                         for p in tournament_data['participants']
@@ -511,7 +532,6 @@ def admin_view():
                 
         else:
             st.warning("No tournaments available. Please create a tournament first.")
-
 def user_view():
     """Display the regular user interface"""
     st.title(f"Welcome {st.session_state.user.username}")

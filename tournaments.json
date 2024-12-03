@@ -3,14 +3,17 @@
         "name": "BDF 12",
         "num_players": 4,
         "participants": [
-            "TEst 1",
-            "Test ",
-            "Test 3",
-            "Test 4"
+            "Test",
+            "TEst 2",
+            "TEst 3",
+            "TEst4"
         ],
-        "bounties": [],
+        "bounties": [
+            "TEst 3",
+            "TEst4"
+        ],
         "stack_size": 10000,
-        "comment": "TEST",
+        "comment": "TEtraaze",
         "earnings": {
             "1": 200,
             "2": 0,
@@ -19,27 +22,32 @@
             "5": 0,
             "6": 0
         },
-        "date_created": "2024-12-03T09:26:31.894538",
+        "date_created": "2024-12-03T09:31:28.839491",
         "history": [
             {
-                "timestamp": "2024-12-03T09:26:41.021810",
+                "timestamp": "2024-12-03T09:35:08.359201",
                 "action": "Elimination",
-                "details": "Test  eliminated by TEst 1 at 09:26"
+                "details": "TEst 2 eliminated by Test at 09:35"
             },
             {
-                "timestamp": "2024-12-03T09:26:50.804589",
+                "timestamp": "2024-12-03T09:35:13.453592",
                 "action": "Elimination",
-                "details": "Test 3 eliminated by Test 4 at 09:26"
+                "details": "Test eliminated by TEst 3 at 09:35"
             },
             {
-                "timestamp": "2024-12-03T09:26:58.586809",
+                "timestamp": "2024-12-03T09:35:23.209408",
+                "action": "Bounty Claimed",
+                "details": "TEst4 claimed bounty point for eliminating TEst 3"
+            },
+            {
+                "timestamp": "2024-12-03T09:35:23.210408",
                 "action": "Winner Declared",
-                "details": "TEst 1 wins the tournament!"
+                "details": "TEst4 wins the tournament!"
             },
             {
-                "timestamp": "2024-12-03T09:26:58.601808",
+                "timestamp": "2024-12-03T09:35:23.226740",
                 "action": "Elimination",
-                "details": "Test 4 eliminated by TEst 1 at 09:26"
+                "details": "TEst 3 eliminated by TEst4 at 09:35"
             }
         ]
     }
