@@ -1,4 +1,4 @@
 Next steps : 
 
-    - Translate everything
+    - Bon probleme avec les bounty et les inputs
     - Multiple tournament Handling ?
