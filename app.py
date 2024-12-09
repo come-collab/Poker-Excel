@@ -12,6 +12,15 @@ from PIL import Image
 
 
 
+# Load player names from data.csv at the start
+def get_club_members():
+    try:
+        df = pd.read_csv('data.csv')
+        return df['Joueurs'].tolist()
+    except Exception as e:
+        st.error(f"Error loading club members: {str(e)}")
+        return []
+
 def display_logo():
     """Display the logo at the top of the page"""
     try:
@@ -262,7 +271,7 @@ def admin_view():
         
         st.markdown("### Create New Tournament")
 
-        # Put the number input and update button outside the form
+        # Tournament name and player count
         tournament_name = st.text_input("Tournament Name", key="tournament_name")
         col1, col2 = st.columns([2,1])
         with col1:
@@ -293,14 +302,13 @@ def admin_view():
             # Participants and Bounties section
             st.markdown("#### Participants & Bounties")
             
+            club_members = get_club_members()
+            
             # Initialize lists for participants and bounties
             participants = [""] * num_players
             bounties = []
             
-            # Create a table-like layout with st.columns
-            st.markdown("Enter participant names and check the box for players with bounties:")
-            
-            # Headers
+            # Create headers for the table
             col1, col2, col3, col4 = st.columns([0.4, 0.1, 0.4, 0.1])
             with col1:
                 st.markdown("**Player Name**")
@@ -317,19 +325,23 @@ def admin_view():
                 
                 # First participant in row
                 with col1:
-                    participants[i] = st.text_input("", key=f"participant_{i}", 
+                    participants[i] = st.selectbox("", 
+                                                options=[""] + club_members,
+                                                key=f"participant_{i}",
                                                 placeholder=f"Participant {i+1}")
                 with col2:
-                    if st.checkbox("", key=f"bounty_{i}") and participants[i]:
+                    if participants[i] and st.checkbox("", key=f"bounty_{i}"):
                         bounties.append(participants[i])
                 
                 # Second participant in row (if exists)
                 if i + 1 < num_players:
                     with col3:
-                        participants[i+1] = st.text_input("", key=f"participant_{i+1}", 
-                                                        placeholder=f"Participant {i+2}")
+                        participants[i+1] = st.selectbox("", 
+                                                    options=[""] + club_members,
+                                                    key=f"participant_{i+1}",
+                                                    placeholder=f"Participant {i+2}")
                     with col4:
-                        if st.checkbox("", key=f"bounty_{i+1}") and participants[i+1]:
+                        if participants[i+1] and st.checkbox("", key=f"bounty_{i+1}"):
                             bounties.append(participants[i+1])
             
             # Comment section
@@ -352,7 +364,7 @@ def admin_view():
                 else:
                     try:
                         tournament_manager = TournamentManager()
-                        tournament = tournament_manager.create_tournament(
+                        tournament_manager.create_tournament(
                             name=tournament_name,
                             num_players=num_players,
                             participants=participants,

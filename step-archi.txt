@@ -1,5 +1,4 @@
 Next steps : 
 
-    - Translate everything, 
-    - Adding the list of the registered bdf participants for the creation of the tournaments,
-    
+    - Translate everything
+    - Multiple tournament Handling ?
