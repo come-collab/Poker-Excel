@@ -8,6 +8,24 @@ import pandas as pd
 import io
 from pathlib import Path
 import datetime
+from PIL import Image
+
+
+
+def display_logo():
+    """Display the logo at the top of the page"""
+    try:
+        logo = Image.open("logo_bdf.png")
+        # Calculate one-third of the page width
+        page_width = 1000  # Typical page width in pixels
+        logo_width = page_width // 6  # Divide by 6 to account for the column layout
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.image(logo, width=logo_width)
+    except FileNotFoundError:
+        st.error("Logo file 'logo_bdf.png' not found. Please ensure it's in the application directory.")
+
 
 
 def load_users() -> Dict:
@@ -98,6 +116,7 @@ def init_session_state():
 
 def login_page():
     """Display the login interface"""
+    display_logo()
     st.title("Poker Tournament Manager")
     
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -129,6 +148,7 @@ def login_page():
 
 def admin_view():
     """Display the admin interface"""
+    display_logo()
     st.title(f"Welcome Admin: {st.session_state.user.username}")
     
     if st.sidebar.button("Logout"):
@@ -534,6 +554,7 @@ def admin_view():
             st.warning("No tournaments available. Please create a tournament first.")
 def user_view():
     """Display the regular user interface"""
+    display_logo()
     st.title(f"Welcome {st.session_state.user.username}")
     
     if st.sidebar.button("Logout"):

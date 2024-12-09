@@ -3,7 +3,4 @@ Next steps :
     - Translate everything, 
     - Add the vision of the active tournament to all the Users
     - Adding the list of the registered bdf participants for the creation of the tournaments,
-    - Add Better management of the tournament : Really like a poker competition (if one player stays alive he is the winner...)
-    - Currently weird handling of the time of Elimination we need to correct that.
-    - Add the logo of BDF
     
