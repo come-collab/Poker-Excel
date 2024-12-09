@@ -552,6 +552,7 @@ def admin_view():
                 
         else:
             st.warning("No tournaments available. Please create a tournament first.")
+
 def user_view():
     """Display the regular user interface"""
     display_logo()
@@ -562,11 +563,93 @@ def user_view():
         st.session_state.authenticated = False
         st.rerun()
     
-    # Display tournament data for users
-    display_tournament_data()
+    # Create tabs for different views
+    tab1, tab2 = st.tabs(["General Ranking", "Active Tournament"])
     
-    # Add auto-refresh button
-    if st.button("Refresh Data"):
+    with tab1:
+        st.header("General Tournament Ranking")
+        display_tournament_data()
+    
+    with tab2:
+        st.header("Active Tournament Status")
+        
+        # Get available tournaments
+        tournament_manager = TournamentManager()
+        tournaments = tournament_manager.load_tournaments()
+        tournament_names = list(tournaments.keys())
+        
+        if tournament_names:
+            # Tournament selection
+            selected_tournament = st.selectbox(
+                "Select Tournament to View",
+                tournament_names,
+                key="user_tournament_select"
+            )
+            
+            if selected_tournament:
+                # Get tournament data
+                tournament_data = tournaments[selected_tournament]
+                
+                # Display tournament info in columns
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.subheader("Tournament Details")
+                    st.write(f"Players: {tournament_data['num_players']}")
+                    st.write(f"Starting Stack: {tournament_data['stack_size']:,}")
+                    
+                with col2:
+                    st.subheader("Prize Pool")
+                    earnings = tournament_data.get('earnings', {})
+                    if earnings:
+                        total_prize = sum(earnings.values())
+                        st.write(f"Total Prize Pool: €{total_prize:,}")
+                        for place, amount in earnings.items():
+                            if amount > 0:
+                                suffix = 'st' if place == 1 else 'nd' if place == 2 else 'rd' if place == 3 else 'th'
+                                st.write(f"{place}{suffix} Place: €{amount:,}")
+                
+                with col3:
+                    st.subheader("Bounties")
+                    if tournament_data['bounties']:
+                        for bounty in tournament_data['bounties']:
+                            st.write(f"🎯 {bounty}")
+                    else:
+                        st.write("No bounties in this tournament")
+                
+                # Display current tournament status
+                st.subheader("Current Tournament Progress")
+                try:
+                    df = pd.read_excel(f"tournament_{selected_tournament}.xlsx")
+                    
+                    # Calculate remaining players
+                    eliminated_players = set(df['Player'].dropna().values)
+                    remaining_players = [p for p in tournament_data['participants'] 
+                                      if p not in eliminated_players]
+                    
+                    # Display remaining players
+                    st.info(f"Remaining Players ({len(remaining_players)}): {', '.join(remaining_players)}")
+                    
+                    # Format and display elimination table
+                    if not df.empty:
+                        df = df.fillna('')
+                        styled_df = df.style.apply(lambda x: ['background-color: #FFD700' if i == 0 
+                                                            else 'background-color: #C0C0C0' if i == 1 
+                                                            else 'background-color: #CD7F32' if i == 2
+                                                            else '' for i in range(len(x))], axis=0)
+                        st.dataframe(styled_df, use_container_width=True)
+                    
+                except Exception as e:
+                    st.error("Unable to load tournament data. The tournament might not have started yet.")
+                
+                # Add auto-refresh button
+                if st.button("Refresh Tournament Data", key="refresh_tournament"):
+                    st.rerun()
+        else:
+            st.info("No active tournaments available at the moment.")
+    
+    # Add general refresh button at the bottom
+    if st.button("Refresh All Data"):
         st.rerun()
 
 def main():
