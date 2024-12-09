@@ -110,7 +110,7 @@ def display_tournament_data():
     """Display tournament data in a formatted table"""
     df = load_tournament_data()
     if df is not None:
-        st.markdown("### Current Tournament Standings")
+        st.markdown("### Classement actuel : ")
         formatted_df = format_tournament_data(df)
         st.dataframe(formatted_df, use_container_width=True)
     else:
@@ -158,28 +158,28 @@ def login_page():
 def admin_view():
     """Display the admin interface"""
     display_logo()
-    st.title(f"Welcome Admin: {st.session_state.user.username}")
+    st.title(f"Bienvenue Didier: {st.session_state.user.username}")
     
     if st.sidebar.button("Logout"):
         st.session_state.user = None
         st.session_state.authenticated = False
         st.rerun()
     
-    st.header("Admin Dashboard")
+    st.header("Tableau de bord Administrateur")
     
-    tab1, tab2, tab3, tab4 = st.tabs(["User Management", "General Ranking", "Tournament Management", "Active Tournament"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Gestion des utilisateurs", "Classement général ", "Gestion des tournois", "Tournois en cours"])
     
     with tab1:
-        st.subheader("User Management")
+        st.subheader("Gestion des utilisateurs")
         
         # Create new user section
-        st.markdown("### Create New User")
+        st.markdown("### Créer un utilisateur")
         with st.form("create_user"):
-            new_username = st.text_input("New Username")
-            new_password = st.text_input("New Password", type="password")
-            is_admin = st.checkbox("Admin Privileges")
+            new_username = st.text_input("Nouvel utilisateur")
+            new_password = st.text_input("Nouveau mot de passe", type="password")
+            is_admin = st.checkbox("Privilèges Administrateur")
             
-            submit_button = st.form_submit_button("Create User")
+            submit_button = st.form_submit_button("Création Utilisateur")
             
             if submit_button:
                 users = load_users()
@@ -197,20 +197,20 @@ def admin_view():
                     st.success(f"User {new_username} created successfully!")
         
         # User management section
-        st.markdown("### Manage Existing Users")
+        st.markdown("### Gestion des utilisateurs existants")
         users = load_users()
         
         for username, user_data in users.items():
             if username != st.session_state.user.username:  # Prevent self-modification
                 col1, col2, col3 = st.columns([2, 1, 1])
                 with col1:
-                    st.write(f"Username: {username}")
+                    st.write(f"Utilisateur: {username}")
                     st.write(f"Role: {'Admin' if user_data['is_admin'] else 'User'}")
-                    st.write(f"Status: {'Suspended' if user_data.get('suspended', False) else 'Active'}")
+                    st.write(f"Status: {'Suspendu' if user_data.get('suspended', False) else 'Active'}")
                 
                 with col2:
                     if st.button(
-                        "Suspend" if not user_data.get('suspended', False) else "Reactivate",
+                        "Suspendre" if not user_data.get('suspended', False) else "Ré Activer",
                         key=f"suspend_{username}"
                     ):
                         users[username]['suspended'] = not users[username].get('suspended', False)
@@ -218,7 +218,7 @@ def admin_view():
                         st.rerun()
                 
                 with col3:
-                    if st.button("Delete", key=f"delete_{username}"):
+                    if st.button("Supprimer", key=f"delete_{username}"):
                         del users[username]
                         save_users(users)
                         st.rerun()
@@ -226,20 +226,20 @@ def admin_view():
                 st.divider()
     
     with tab2:
-        st.subheader("General Ranking Management")
+        st.subheader("Gestion du classement géneral")
         
         # Display current general ranking data
         df = load_tournament_data()
         if df is not None:
-            st.markdown("### Current General Ranking")
+            st.markdown("### Classement actuel")
             formatted_df = format_tournament_data(df)
             st.dataframe(formatted_df, use_container_width=True)
         else:
-            st.warning("No general ranking data available")
+            st.warning("Pas de classement actuel")
         
         # File upload section for general ranking
-        st.markdown("### Update General Ranking")
-        uploaded_file = st.file_uploader("Choose a general ranking file", type=['xlsx', 'xls', 'csv'], key="general_ranking")
+        st.markdown("### Mettre à jour le classement général")
+        uploaded_file = st.file_uploader("Choisir un fichier de classement général", type=['xlsx', 'xls', 'csv'], key="general_ranking")
         
         if uploaded_file is not None:
             try:
@@ -267,22 +267,22 @@ def admin_view():
                 st.error("Please ensure your file has the required columns")
     
     with tab3:
-        st.subheader("Tournament Management")
+        st.subheader("Gestion d'un tournois")
         
-        st.markdown("### Create New Tournament")
+        st.markdown("### Créer un nouveau tournoi")
 
         # Tournament name and player count
-        tournament_name = st.text_input("Tournament Name", key="tournament_name")
+        tournament_name = st.text_input("Nom du tournoi", key="tournament_name")
         col1, col2 = st.columns([2,1])
         with col1:
-            num_players = st.number_input("Number of Players", min_value=2, value=8, key="num_players")
+            num_players = st.number_input("Nombre de joueurs", min_value=2, value=8, key="num_players")
 
         with st.form("create_tournament"):
             # Basic tournament info
-            stack_size = st.number_input("Starting Stack Size", min_value=100, value=10000, step=100)
+            stack_size = st.number_input("Stack de départ", min_value=100, value=10000, step=100)
             
             # Earnings section
-            st.markdown("#### Tournament Earnings")
+            st.markdown("#### Gains Tournoi")
             earnings = {}
             col1, col2 = st.columns(2)
             
@@ -311,11 +311,11 @@ def admin_view():
             # Create headers for the table
             col1, col2, col3, col4 = st.columns([0.4, 0.1, 0.4, 0.1])
             with col1:
-                st.markdown("**Player Name**")
+                st.markdown("**Nom du joueur**")
             with col2:
                 st.markdown("**Bounty**")
             with col3:
-                st.markdown("**Player Name**")
+                st.markdown("**Nom du joueur**")
             with col4:
                 st.markdown("**Bounty**")
             
@@ -345,12 +345,12 @@ def admin_view():
                             bounties.append(participants[i+1])
             
             # Comment section
-            comment = st.text_area("Tournament Comments", height=100)
+            comment = st.text_area("Commentaire tournois", height=100)
             
             # Remove empty strings from participants list before submission
             participants = [p for p in participants if p]
             
-            submit_button = st.form_submit_button("Create Tournament")
+            submit_button = st.form_submit_button("Créer un tournoi")
             
             if submit_button:
                 if len(participants) != num_players:
@@ -373,7 +373,7 @@ def admin_view():
                             comment=comment,
                             earnings=earnings
                         )
-                        st.success(f"Tournament {tournament_name} created successfully!")
+                        st.success(f"Tournoi {tournament_name} créé avec succès")
                         
                         # Clear session state after successful creation
                         for key in list(st.session_state.keys()):
@@ -385,7 +385,7 @@ def admin_view():
                         st.error(str(e))
             
         # List existing tournaments
-        st.markdown("### Existing Tournaments")
+        st.markdown("### Tournois existants : ")
         tournament_manager = TournamentManager()
         tournaments = tournament_manager.get_tournaments()
         
@@ -428,7 +428,7 @@ def admin_view():
             st.info("No tournaments created yet")
     with tab4:
         
-        st.subheader("Active Tournament Management")
+        st.subheader("Gestion du tournoi en cours")
         
         # Select active tournament
         tournament_manager = TournamentManager()
@@ -436,16 +436,16 @@ def admin_view():
         tournament_names = list(tournaments.keys())
         
         if tournament_names:
-            selected_tournament = st.selectbox("Select Tournament", tournament_names)
+            selected_tournament = st.selectbox("Choisir un tournoi ", tournament_names)
             
             if selected_tournament:
                 # Get tournament data
                 tournament_data = tournaments[selected_tournament]
                 
                 # Display tournament info
-                st.markdown("### Tournament Information")
-                st.write(f"Number of Players: {tournament_data['num_players']}")
-                st.write(f"Starting Stack: {tournament_data['stack_size']:,}")
+                st.markdown("### Information tournois ")
+                st.write(f"Nombres de joueurs: {tournament_data['num_players']}")
+                st.write(f"Stack de départ: {tournament_data['stack_size']:,}")
                 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -459,19 +459,19 @@ def admin_view():
                         for bounty in tournament_data['bounties']:
                             st.write(f"• {bounty}")
                     else:
-                        st.write("No bounties in this tournament")
+                        st.write("Pas de bounties pour ce tournoi ")
                 
                 # Display current tournament eliminations
-                st.markdown("### Current Tournament Status")
+                st.markdown("### Statut du tournoi en cours")
                 try:
                     df = pd.read_excel(f"tournament_{selected_tournament}.xlsx")
                     st.dataframe(df, use_container_width=True)
                 except Exception as e:
-                    st.error(f"Error loading tournament data: {str(e)}")
+                    st.error(f"Erreur lors de la création du tournoi: {str(e)}")
                     df = pd.DataFrame()  # Create empty DataFrame if file doesn't exist
                 
                 # Form for recording eliminations
-                st.markdown("### Record Elimination")
+                st.markdown("### Eliminations")
                 with st.form("elimination_form"):
                     # Get currently eliminated players
                     try:
@@ -485,7 +485,7 @@ def admin_view():
                     
                     # Only show remaining players in elimination dropdown
                     eliminated_player = st.selectbox(
-                        "Eliminated Player",
+                        "Joueur éliminé",
                         remaining_players if remaining_players else ["No players available"],
                         key="eliminated_player"
                     )
@@ -523,14 +523,14 @@ def admin_view():
                         for p in tournament_data['participants']
                     ]
                     killer_display = st.selectbox(
-                        "Eliminated By",
+                        "Eliminé par : ",
                         killer_options,
                         key="killer"
                     )
                     # Remove "(Eliminated)" suffix for database storage
                     killer = killer_display.split(" (Eliminated)")[0]
                     
-                    submit_button = st.form_submit_button("Record Elimination")
+                    submit_button = st.form_submit_button("Enregistrement élimination")
                     
                     if submit_button and eliminated_player != "No players available":
                         try:
@@ -548,7 +548,7 @@ def admin_view():
                                 f"{eliminated_player} eliminated by {killer} at {elimination_time.strftime('%H:%M')}"
                             )
                             
-                            st.success(f"Recorded elimination of {eliminated_player}")
+                            st.success(f"Elimination enregistré de : {eliminated_player}")
                             # Clear the form selections
                             if 'eliminated_player' in st.session_state:
                                 del st.session_state.eliminated_player
@@ -560,15 +560,15 @@ def admin_view():
                             st.error(f"Error recording elimination: {str(e)}")
                             
                 # Display remaining players count
-                st.info(f"Remaining players: {len(remaining_players)}")
+                st.info(f"Joueurs restants : {len(remaining_players)}")
                 
         else:
-            st.warning("No tournaments available. Please create a tournament first.")
+            st.warning("Pas de tournoi en cours. Créer un tournoi en premier lieu")
 
 def user_view():
     """Display the regular user interface"""
     display_logo()
-    st.title(f"Welcome {st.session_state.user.username}")
+    st.title(f"Bienvenue : {st.session_state.user.username}")
     
     if st.sidebar.button("Logout"):
         st.session_state.user = None
@@ -576,14 +576,14 @@ def user_view():
         st.rerun()
     
     # Create tabs for different views
-    tab1, tab2 = st.tabs(["General Ranking", "Active Tournament"])
+    tab1, tab2 = st.tabs(["Classement géneral", "Tournois en cours"])
     
     with tab1:
-        st.header("General Tournament Ranking")
+        st.header("Classement géneral BDF : ")
         display_tournament_data()
     
     with tab2:
-        st.header("Active Tournament Status")
+        st.header("Information sur la bdf en cours : ")
         
         # Get available tournaments
         tournament_manager = TournamentManager()
@@ -658,10 +658,10 @@ def user_view():
                 if st.button("Refresh Tournament Data", key="refresh_tournament"):
                     st.rerun()
         else:
-            st.info("No active tournaments available at the moment.")
+            st.info("Pas de tournois en cours.")
     
     # Add general refresh button at the bottom
-    if st.button("Refresh All Data"):
+    if st.button("Rafraichir les données"):
         st.rerun()
 
 def main():
