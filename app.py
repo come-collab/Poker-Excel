@@ -277,7 +277,8 @@ def admin_view():
         with col1:
             num_players = st.number_input("Nombre de joueurs", min_value=2, value=8, key="num_players")
 
-        with st.form("create_tournament"):
+        # First form for participant selection
+        with st.form("participant_form"):
             # Basic tournament info
             stack_size = st.number_input("Stack de départ", min_value=100, value=10000, step=100)
             
@@ -299,133 +300,106 @@ def admin_view():
             total_earnings = sum(earnings.values())
             st.write(f"Total Prize Pool: €{total_earnings:,}")
             
-            # Participants and Bounties section
-            st.markdown("#### Participants & Bounties")
+            # Participants section
+            st.markdown("#### Participants")
             
+            # Get club members
             club_members = get_club_members()
             
-            # Initialize lists for participants and bounties
-            participants = [""] * num_players
-            bounties = []
+            # Section for Members
+            st.markdown("##### Club Members")
+            selected_members = st.multiselect(
+                "Sélectionner les membres participants",
+                options=club_members,
+                key="member_select"
+            )
             
-            # Create headers for the table
-            col1, col2, col3, col4 = st.columns([0.4, 0.1, 0.4, 0.1])
-            with col1:
-                st.markdown("**Nom du joueur**")
-            with col2:
-                st.markdown("**Bounty**")
-            with col3:
-                st.markdown("**Nom du joueur**")
-            with col4:
-                st.markdown("**Bounty**")
+            # Section for Invitees
+            st.markdown("##### Invités")
+            num_invitee_rows = (num_players - len(selected_members) + 1) // 2
+            invitees = []
             
-            # Create rows for participant inputs
-            for i in range(0, num_players, 2):
-                col1, col2, col3, col4 = st.columns([0.4, 0.1, 0.4, 0.1])
+            # Create two columns for invitee inputs
+            for row in range(num_invitee_rows):
+                col1, col2 = st.columns(2)
                 
-                # First participant in row
                 with col1:
-                    participants[i] = st.selectbox("", 
-                                                options=[""] + club_members,
-                                                key=f"participant_{i}",
-                                                placeholder=f"Participant {i+1}")
-                with col2:
-                    if participants[i] and st.checkbox("", key=f"bounty_{i}"):
-                        bounties.append(participants[i])
+                    invitee1 = st.text_input("", key=f"invitee_{row}_1", placeholder="Nom de l'invité").strip()
+                    if invitee1:
+                        invitees.append(invitee1)
                 
-                # Second participant in row (if exists)
-                if i + 1 < num_players:
-                    with col3:
-                        participants[i+1] = st.selectbox("", 
-                                                    options=[""] + club_members,
-                                                    key=f"participant_{i+1}",
-                                                    placeholder=f"Participant {i+2}")
-                    with col4:
-                        if participants[i+1] and st.checkbox("", key=f"bounty_{i+1}"):
-                            bounties.append(participants[i+1])
+                with col2:
+                    invitee2 = st.text_input("", key=f"invitee_{row}_2", placeholder="Nom de l'invité").strip()
+                    if invitee2:
+                        invitees.append(invitee2)
+
+            # Combine all participants
+            all_participants = selected_members + invitees
             
-            # Comment section
-            comment = st.text_area("Commentaire tournois", height=100)
+            # Submit button for first form
+            participants_submitted = st.form_submit_button("Confirmer les participants")
             
-            # Remove empty strings from participants list before submission
-            participants = [p for p in participants if p]
-            
-            submit_button = st.form_submit_button("Créer un tournoi")
-            
-            if submit_button:
-                if len(participants) != num_players:
-                    st.error("Please enter all participant names")
-                elif len(set(participants)) != len(participants):
-                    st.error("Duplicate participants found")
-                elif not tournament_name:
-                    st.error("Please enter a tournament name")
-                elif total_earnings <= 0:
-                    st.error("Please enter tournament earnings")
-                else:
-                    try:
-                        tournament_manager = TournamentManager()
-                        tournament_manager.create_tournament(
-                            name=tournament_name,
-                            num_players=num_players,
-                            participants=participants,
-                            bounties=bounties,
-                            stack_size=stack_size,
-                            comment=comment,
-                            earnings=earnings
-                        )
-                        st.success(f"Tournoi {tournament_name} créé avec succès")
-                        
-                        # Clear session state after successful creation
-                        for key in list(st.session_state.keys()):
-                            if key.startswith('participant_') or key.startswith('bounty_'):
-                                del st.session_state[key]
-                        st.rerun()
+            if participants_submitted:
+                st.session_state.show_bounties = True
+                st.session_state.current_participants = all_participants
+
+        # If participants are confirmed, show bounty selection form
+        if 'show_bounties' in st.session_state and st.session_state.current_participants:
+            with st.form("bounty_form"):
+                st.markdown("#### Sélection des Bounties 🎯")
+                current_participants = st.session_state.current_participants
+                
+                # Create columns for bounty selection
+                bounty_cols = st.columns(4)
+                bounties = []
+                
+                # Display checkboxes for all current participants
+                for i, participant in enumerate(current_participants):
+                    col_idx = i % 4
+                    with bounty_cols[col_idx]:
+                        if st.checkbox(f"{participant} 🎯", key=f"bounty_{i}"):
+                            bounties.append(participant)
+                
+                # Comment section
+                comment = st.text_area("Commentaire tournois", height=100)
+                
+                # Submit button for final form
+                submit_button = st.form_submit_button("Créer un tournoi")
+                
+                if submit_button:
+                    if len(current_participants) != num_players:
+                        st.error(f"Please enter exactly {num_players} participants (currently have {len(current_participants)})")
+                    elif len(set(current_participants)) != len(current_participants):
+                        st.error("Duplicate participants found")
+                    elif not tournament_name:
+                        st.error("Please enter a tournament name")
+                    elif total_earnings <= 0:
+                        st.error("Please enter tournament earnings")
+                    else:
+                        try:
+                            tournament_manager = TournamentManager()
+                            tournament_manager.create_tournament(
+                                name=tournament_name,
+                                num_players=num_players,
+                                participants=current_participants,
+                                bounties=bounties,
+                                stack_size=stack_size,
+                                comment=comment,
+                                earnings=earnings
+                            )
+                            st.success(f"Tournoi {tournament_name} créé avec succès")
                             
-                    except ValueError as e:
-                        st.error(str(e))
-            
-        # List existing tournaments
-        st.markdown("### Tournois existants : ")
-        tournament_manager = TournamentManager()
-        tournaments = tournament_manager.get_tournaments()
-        
-        if tournaments:
-            for name, data in tournaments.items():
-                with st.expander(f"Tournament: {name}"):
-                    # Basic tournament info
-                    st.write(f"Number of Players: {data['num_players']}")
-                    st.write(f"Starting Stack: {data['stack_size']:,}")
-                    st.write(f"Created: {data['date_created']}")
-                    
-                    # Display earnings
-                    st.markdown("#### Prize Pool")
-                    earnings = data.get('earnings', {})
-                    if earnings:
-                        for place, amount in earnings.items():
-                            if amount > 0:
-                                st.write(f"{place}{'st' if place == 1 else 'nd' if place == 2 else 'rd' if place == 3 else 'th'} Place: €{amount:,}")
-                        st.write(f"Total Prize Pool: €{sum(earnings.values()):,}")
-                    
-                    # Participants and Bounties
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown("#### Participants")
-                        for participant in data['participants']:
-                            has_bounty = participant in data['bounties']
-                            st.write(f"• {participant} {'🎯' if has_bounty else ''}")
-                    
-                    # Comment
-                    if data['comment']:
-                        st.markdown("#### Tournament Comments")
-                        st.write(data['comment'])
-                    
-                    # Tournament history
-                    if data['history']:
-                        st.markdown("#### Tournament History")
-                        for entry in data['history']:
-                            st.write(f"{entry['timestamp']}: {entry['action']} - {entry['details']}")
-        else:
-            st.info("No tournaments created yet")
+                            # Clear session state after successful creation
+                            for key in list(st.session_state.keys()):
+                                if key.startswith(('member_', 'invitee_', 'bounty_')):
+                                    del st.session_state[key]
+                            st.session_state.show_bounties = False
+                            st.session_state.current_participants = []
+                            st.rerun()
+                                
+                        except ValueError as e:
+                            st.error(str(e))
+
     with tab4:
         
         st.subheader("Gestion du tournoi en cours")
