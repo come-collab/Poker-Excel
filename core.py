@@ -113,7 +113,7 @@ class TournamentManager:
     
     def create_tournament_excel(self, tournament_name: str, num_players: int) -> None:
         """Create initial tournament Excel file with required columns"""
-        df = pd.DataFrame(columns=['Rank', 'Player', 'Elimination Time', 'Eliminated By', 'Bounty Claimed From'])
+        df = pd.DataFrame(columns=['Rank', 'Player', 'Elimination Time', 'Eliminated By'])
         df['Rank'] = range(num_players, 0, -1)  # Reverse order for eliminations
         excel_path = f"tournament_{tournament_name}.xlsx"
         df.to_excel(excel_path, index=False)
