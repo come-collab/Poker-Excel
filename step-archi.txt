@@ -1,4 +1,0 @@
-Next steps : 
-
-    - Bon probleme avec les bounty et les inputs
-    - Multiple tournament Handling ?
