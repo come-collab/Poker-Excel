@@ -24,7 +24,7 @@ def get_club_members():
 def display_logo():
     """Display the logo at the top of the page"""
     try:
-        logo = Image.open("logo_bdf.png")
+        logo = Image.open("logo_bdf_blanc.png")
         # Calculate one-third of the page width
         page_width = 1000  # Typical page width in pixels
         logo_width = page_width // 6  # Divide by 6 to account for the column layout
